@@ -1,42 +1,14 @@
-use clap::{crate_authors, crate_name, crate_version, AppSettings, Clap};
-use std::{env, path::PathBuf};
+mod cli;
 
-const DEFAULT_DIR: &str = "~/journal";
-
-/// A plaintext planning tool for a particular kind of nerd.
-#[derive(Clap)]
-#[clap(name = crate_name!())]
-#[clap(version = crate_version!())]
-#[clap(author = crate_authors!())]
-#[clap(setting = AppSettings::ColoredHelp)]
-struct Options {
-    /// The directory that contains the journal files.
-    #[clap(long, default_value = DEFAULT_DIR)]
-    path: String,
-}
-
-impl Options {
-    /// Gets the directory containing plan files.
-    fn get_root_dir(self) -> PathBuf {
-        if self.path != DEFAULT_DIR {
-            PathBuf::from(self.path)
-        } else {
-            match dirs::home_dir() {
-                Some(mut dir) => {
-                    dir.push("journal");
-                    dir
-                }
-                None => PathBuf::from(self.path),
-            }
-        }
-    }
-}
+use clap::Clap;
+use cli::Options;
 
 mod plan_path {
     use chrono::NaiveDate;
     use std::{fs, io, path::PathBuf, process::Command};
     const LOG_EXT: &str = "log";
 
+    #[derive(Debug)]
     pub struct PlanFile {
         path: PathBuf,
     }
@@ -56,12 +28,9 @@ mod plan_path {
                 .expect("Could not parse date from filename.")
         }
 
-        pub fn get_path(&self) -> &PathBuf {
-            &self.path
-        }
+        pub fn edit(&self) {
+            log::debug!("Opening plan file in vim: {:#?}", &self.path);
 
-        pub fn open(&self) {
-            log::debug!("Opening journal file in vim: {:#?}", &self.path);
             Command::new("vim.bat")
                 .arg(&self.path)
                 .status()
@@ -78,29 +47,59 @@ mod plan_path {
             PlanDirectory { path }
         }
 
-        pub fn get_plan(&self, date: NaiveDate) -> PlanFile {
-            let mut plan_path = self.path.to_owned();
-            let today_file_name = date.format("%Y.%m.%d.log");
+        pub fn create_plan(&self, date: NaiveDate) -> anyhow::Result<PlanFile> {
+            let plan_path = self.get_plan_path(date);
 
-            plan_path.push(&today_file_name.to_string());
-            PlanFile::new(plan_path)
+            log::debug!("Creating plan file for date: {:#?}", date);
+            std::fs::File::create(plan_path.to_owned())?;
+
+            Ok(PlanFile::new(plan_path))
+        }
+
+        pub fn copy_plan(&self, plan_to_copy: PlanFile, date: NaiveDate) -> io::Result<PlanFile> {
+            let path = self.get_plan_path(date);
+
+            log::debug!("Copying plan file: {:#?} to {:#?}", plan_to_copy, path);
+            std::fs::copy(plan_to_copy.path, path.to_owned())?;
+
+            Ok(PlanFile::new(path))
+        }
+
+        pub fn get_plan(&self, date: NaiveDate) -> Option<PlanFile> {
+            let plan_path = self.get_plan_path(date);
+
+            if plan_path.exists() {
+                log::debug!("Plan file found at path: {:#?}", plan_path);
+                Some(PlanFile::new(plan_path))
+            } else {
+                log::debug!("NO plan file found at path: {:#?}", plan_path);
+                None
+            }
         }
 
         pub fn get_most_recent_plan(&self) -> Option<PlanFile> {
             let today = chrono::Local::today().naive_local();
             let plan_paths = self.get_files();
-            if plan_paths.is_err() {
-                return None;
-            } else {
-                let mut plan_paths = plan_paths.unwrap();
-                plan_paths.sort();
-                plan_paths.reverse();
 
-                plan_paths
-                    .into_iter()
-                    .map(|p| PlanFile::new(p))
-                    .find(|p| p.get_date() <= today)
+            match plan_paths {
+                Ok(mut paths) => {
+                    paths.sort();
+                    paths.reverse();
+                    paths
+                        .into_iter()
+                        .map(|p| PlanFile::new(p))
+                        .find(|p| p.get_date() <= today)
+                }
+                _ => None,
             }
+        }
+
+        fn get_plan_path(&self, date: NaiveDate) -> PathBuf {
+            let mut plan_path = self.path.to_owned();
+            let today_file_name = date.format("%Y.%m.%d.log");
+
+            plan_path.push(&today_file_name.to_string());
+            plan_path
         }
 
         fn get_files(&self) -> io::Result<Vec<PathBuf>> {
@@ -130,30 +129,23 @@ fn main() -> anyhow::Result<()> {
     env_logger::init();
 
     let options = Options::parse();
+
     let plan_dir = PlanDirectory::new(options.get_root_dir());
-
     let today = chrono::Local::today().naive_local();
-    let today_path = plan_dir.get_plan(today);
-    let most_recent_plan = plan_dir.get_most_recent_plan();
+    let today_plan = plan_dir.get_plan(today);
 
-    if most_recent_plan.is_some() {}
+    let today_plan = match today_plan {
+        Some(p) => p,
+        None => {
+            let most_recent_plan = plan_dir.get_most_recent_plan();
+            match most_recent_plan {
+                Some(p) => plan_dir.copy_plan(p, today)?,
+                None => plan_dir.create_plan(today)?,
+            }
+        }
+    };
 
-    let today_file_name = today.format("%Y.%m.%d.log");
-
-    println!("Today name: {}", today_file_name);
-    println!(
-        "Latest name: {}",
-        plan_dir
-            .get_most_recent_plan()
-            .unwrap()
-            .get_path()
-            .file_name()
-            .unwrap()
-            .to_str()
-            .unwrap()
-    );
-
-    today_path.open();
+    today_plan.edit();
 
     Ok(())
 }
