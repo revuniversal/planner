@@ -4,7 +4,8 @@ use clap::{crate_authors, crate_name, crate_version, AppSettings, Clap};
 
 const DEFAULT_DIR: &str = "~/journal";
 
-/// A plaintext planning tool for a particular kind of nerd.  #[derive(Clap)]
+/// A plaintext planning tool for a particular kind of nerd.  
+#[derive(Clap)]
 #[clap(name = crate_name!())]
 #[clap(version = crate_version!())]
 #[clap(author = crate_authors!())]
