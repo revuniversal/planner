@@ -8,12 +8,20 @@ I've been creating a markdown(ish) plan file everyday for several years.  I use 
 
 In my experience, creating my plan by hand each day gives me more agency than allowing a tool to create it for me.  However, this is subject to human error, and often results in mismatches between the name of the plan files and the content.  It also makes it more difficult to track over time.
 
+## Installation
+
+```console
+foo@bar:~$ cargo install planner
+```
+
+> To use cargo install, you'll need to [install Rust](https://www.rust-lang.org/tools/install).
+
 ## Usage
 
 ### Default
 
-```sh
-$> planner
+```console
+foo@bar:~$ planner
 ```
 
 Opens today's plan in vim.  If today's plan doesn't exist, then it will be created by copying the most recent plan.  If no plan exists, then an empty plan will be created.
@@ -21,7 +29,7 @@ Opens today's plan in vim.  If today's plan doesn't exist, then it will be creat
 ### Help
 
 ```sh
-$> planner --help
+foo@bar:~$ planner --help
 ```
 
 ## TODOs
