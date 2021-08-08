@@ -6,7 +6,7 @@ use cli::Options;
 mod plan_path {
     use chrono::NaiveDate;
     use std::{fs, io, path::PathBuf, process::Command};
-    const LOG_EXT: &str = "log";
+    const LOG_EXT: &str = "plan.md";
 
     #[derive(Debug)]
     pub struct PlanFile {
@@ -96,7 +96,8 @@ mod plan_path {
 
         fn get_plan_path(&self, date: NaiveDate) -> PathBuf {
             let mut plan_path = self.path.to_owned();
-            let today_file_name = date.format("%Y.%m.%d.log");
+            let file_format = format!("%Y.%m.%d.{}", LOG_EXT);
+            let today_file_name = date.format(file_format.as_str());
 
             plan_path.push(&today_file_name.to_string());
             plan_path
