@@ -2,6 +2,9 @@ use std::path::PathBuf;
 
 use clap::{crate_authors, crate_name, crate_version, AppSettings, Clap};
 
+// NOTE: These 2 constants should be changed together.  Not worth the time to
+// fix.  Deal with it.
+const PLANNER_DIR: &str = ".planner";
 const DEFAULT_DIR: &str = "~/.planner";
 
 /// A plaintext planning tool for a particular kind of nerd.  
@@ -24,7 +27,7 @@ impl Options {
         } else {
             match dirs::home_dir() {
                 Some(mut dir) => {
-                    dir.push("journal");
+                    dir.push(PLANNER_DIR);
                     dir
                 }
                 None => PathBuf::from(self.path),
