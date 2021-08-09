@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use clap::{crate_authors, crate_name, crate_version, AppSettings, Clap};
 
-const DEFAULT_DIR: &str = "~/journal";
+const DEFAULT_DIR: &str = "~/.planner";
 
 /// A plaintext planning tool for a particular kind of nerd.  
 #[derive(Clap)]
