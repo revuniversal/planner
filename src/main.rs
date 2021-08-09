@@ -20,9 +20,11 @@ mod plan_path {
         }
 
         pub fn get_date(&self) -> NaiveDate {
+            // need to remove both .plan and .md, so strip the extension twice
             let mut path = self.path.to_owned();
-
             path.set_extension("");
+            path.set_extension("");
+
             let date_str = path.file_name().and_then(|e| e.to_str()).unwrap();
             chrono::NaiveDate::parse_from_str(&date_str, "%Y.%m.%d")
                 .expect("Could not parse date from filename.")
@@ -44,6 +46,7 @@ mod plan_path {
 
     impl PlanDirectory {
         pub fn new(path: PathBuf) -> Self {
+            log::debug!("Initializing plan directory at '{:#?}'.", path);
             PlanDirectory { path }
         }
 
@@ -72,7 +75,7 @@ mod plan_path {
                 log::debug!("Plan file found at path: {:#?}", plan_path);
                 Some(PlanFile::new(plan_path))
             } else {
-                log::debug!("NO plan file found at path: {:#?}", plan_path);
+                log::debug!("No plan file found at path: {:#?}", plan_path);
                 None
             }
         }
@@ -81,7 +84,7 @@ mod plan_path {
             let today = chrono::Local::today().naive_local();
             let plan_paths = self.get_files();
 
-            match plan_paths {
+            let file = match plan_paths {
                 Ok(mut paths) => {
                     paths.sort();
                     paths.reverse();
@@ -91,7 +94,10 @@ mod plan_path {
                         .find(|p| p.get_date() <= today)
                 }
                 _ => None,
-            }
+            };
+
+            log::debug!("Most recent plan: {:#?}", file);
+            file
         }
 
         fn get_plan_path(&self, date: NaiveDate) -> PathBuf {
@@ -113,13 +119,16 @@ mod plan_path {
         }
 
         fn is_plan_file(path: &PathBuf) -> bool {
-            match path.extension() {
-                Some(ext) => match ext.to_str() {
-                    Some(ext_str) => ext_str == LOG_EXT,
+            let is_plan = match path.file_name() {
+                Some(file_name) => match file_name.to_str() {
+                    Some(ext_str) => ext_str.ends_with(LOG_EXT),
                     _ => false,
                 },
                 _ => false,
-            }
+            };
+
+            log::debug!("{:#?} is plan file: {}", path, is_plan);
+            is_plan
         }
     }
 }
