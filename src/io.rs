@@ -1,10 +1,10 @@
-
 use chrono::NaiveDate;
 use std::{
     fs, io,
     path::{Path, PathBuf},
     process::Command,
 };
+
 const LOG_EXT: &str = "plan.md";
 
 #[derive(Debug)]
