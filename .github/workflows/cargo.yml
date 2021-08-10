@@ -21,8 +21,11 @@ jobs:
     - name: Run tests
       run: cargo test --verbose
     - name: Check Format
-      run: cargo fmt -- --check
+      run: cargo fmt --all -- --check
     - name: Clippy Lint
-      run: cargo clippy -- --D
+      run: cargo clippy -- -D warn
 #     - name: cargo-auto-publish
 #       uses: seunlanlege/cargo-auto-publish@2
+#       env:
+#         CARGO_TOKEN: ${{ secrets.CARGO_TOKEN }}
+        
