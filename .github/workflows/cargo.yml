@@ -23,9 +23,8 @@ jobs:
     - name: Check Format
       run: cargo fmt --all -- --check
     - name: Clippy Lint
-      run: cargo clippy -- -D warn
-#     - name: cargo-auto-publish
-#       uses: seunlanlege/cargo-auto-publish@2
-#       env:
-#         CARGO_TOKEN: ${{ secrets.CARGO_TOKEN }}
-        
+      run: cargo clippy -- -D warnings
+    - name: cargo-auto-publish
+      uses: seunlanlege/cargo-auto-publish@2
+      env:
+        CARGO_TOKEN: ${{ secrets.CARGO_TOKEN }}
