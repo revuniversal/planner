@@ -5,7 +5,11 @@ use cli::Options;
 
 mod plan_path {
     use chrono::NaiveDate;
-    use std::{fs, io, path::PathBuf, process::Command};
+    use std::{
+        fs, io,
+        path::{Path, PathBuf},
+        process::Command,
+    };
     const LOG_EXT: &str = "plan.md";
 
     #[derive(Debug)]
@@ -26,7 +30,7 @@ mod plan_path {
             path.set_extension("");
 
             let date_str = path.file_name().and_then(|e| e.to_str()).unwrap();
-            chrono::NaiveDate::parse_from_str(&date_str, "%Y.%m.%d")
+            chrono::NaiveDate::parse_from_str(date_str, "%Y.%m.%d")
                 .expect("Could not parse date from filename.")
         }
 
@@ -90,7 +94,7 @@ mod plan_path {
                     paths.reverse();
                     paths
                         .into_iter()
-                        .map(|p| PlanFile::new(p))
+                        .map(PlanFile::new)
                         .find(|p| p.get_date() <= today)
                 }
                 _ => None,
@@ -118,7 +122,7 @@ mod plan_path {
                 .collect::<Vec<PathBuf>>())
         }
 
-        fn is_plan_file(path: &PathBuf) -> bool {
+        fn is_plan_file(path: &Path) -> bool {
             let is_plan = match path.file_name() {
                 Some(file_name) => match file_name.to_str() {
                     Some(ext_str) => ext_str.ends_with(LOG_EXT),
