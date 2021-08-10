@@ -1,5 +1,7 @@
 # Planner
 
+[![CI](https://github.com/revuniversal/planner/actions/workflows/cargo.yml/badge.svg)](https://github.com/revuniversal/planner/actions/workflows/cargo.yml)
+
 A planning app to help me get my shit together, written in rust.
 
 ## Motivation
