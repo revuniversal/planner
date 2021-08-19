@@ -29,6 +29,10 @@ impl PlanFile {
             .expect("Could not parse date from filename.")
     }
 
+    pub fn content(&self) -> io::Result<String> {
+        fs::read_to_string(self.path.to_owned())
+    }
+
     pub fn edit(&self) {
         log::debug!("Opening plan file in vim: {:#?}", &self.path);
 
