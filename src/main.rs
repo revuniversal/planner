@@ -39,7 +39,7 @@ fn main() -> anyhow::Result<()> {
             let md = today_plan.content()?;
             let plan = plan::Plan::from_document(&md)?;
 
-            println!("Date: {}", plan.date().format(format!("%m/%d/%Y").as_str()));
+            println!("Date: {}", plan.date().format("%m/%d/%Y"));
             println!("Day: {:?}", plan.day());
         }
         cli::Command::Edit => {

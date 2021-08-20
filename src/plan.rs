@@ -50,7 +50,7 @@ pub fn parse_date(nodes: Children<RefCell<Ast>>) -> Result<NaiveDate, ParseError
         date_str = String::from_utf8(text).unwrap();
     }
 
-    chrono::NaiveDate::parse_from_str(&date_str.trim(), "%m/%d/%Y")
+    chrono::NaiveDate::parse_from_str(date_str.trim(), "%m/%d/%Y")
 }
 
 fn collect_text<'a>(node: &'a AstNode<'a>, output: &mut Vec<u8>) {
