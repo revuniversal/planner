@@ -19,9 +19,9 @@ pub struct Options {
 
 #[derive(Clap, Debug)]
 pub enum Command {
-    /// Edit todays plan in Vim.
+    /// Edit the plan in Vim.
     Edit,
-    /// Send the target plan's markdown AST to STDOUT.
+    /// Send the plan's abstract syntax tree to STDOUT.
     Ast,
     /// Send the plan to STDOUT.
     View,
