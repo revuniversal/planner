@@ -6,45 +6,60 @@ use cli::Options;
 use comrak::{parse_document, Arena, ComrakOptions};
 use io::*;
 
-mod parser {
-    use chrono::{NaiveDate, ParseError};
+mod plan {
+    use std::cell::RefCell;
+
+    use chrono::{Datelike, NaiveDate, ParseError, Weekday};
     use comrak::{
-        nodes::{AstNode, NodeValue},
+        arena_tree::Children,
+        nodes::{Ast, AstNode, NodeValue},
         parse_document, Arena, ComrakOptions,
     };
 
-    struct PlanParser {
-        document: String,
+    pub struct Plan {
+        date: NaiveDate,
+        day: Weekday,
     }
 
-    impl PlanParser {
-        pub fn new(document: String) -> Self {
-            PlanParser { document }
+    impl Plan {
+        pub fn from_document(doc: &str) -> anyhow::Result<Self> {
+            let arena = Arena::new();
+            let root = parse_document(&arena, doc, &ComrakOptions::default());
+            let nodes = root.children();
+            let date = parse_date(nodes)?;
+            let day = date.weekday();
+
+            Ok(Plan { date, day })
         }
 
-        pub fn parse_date(&self) -> Result<NaiveDate, ParseError> {
-            let arena = Arena::new();
-            let root = parse_document(&arena, &self.document, &ComrakOptions::default());
-            let mut date_str = "".to_string();
+        pub fn date(&self) -> NaiveDate {
+            self.date
+        }
+        pub fn day(&self) -> Weekday {
+            self.day
+        }
+    }
 
-            for node in root.children() {
-                let header = match node.data.to_owned().into_inner().value {
-                    NodeValue::Heading(c) => c,
-                    _ => continue,
-                };
+    pub fn parse_date(nodes: Children<RefCell<Ast>>) -> Result<NaiveDate, ParseError> {
+        let mut date_str = "".to_string();
 
-                if header.level != 1 {
-                    continue;
-                }
+        for node in nodes {
+            let header = match node.data.to_owned().into_inner().value {
+                NodeValue::Heading(c) => c,
+                _ => continue,
+            };
 
-                let mut text = Vec::new();
-                collect_text(node, &mut text);
-
-                date_str = String::from_utf8(text).unwrap();
+            if header.level != 1 {
+                continue;
             }
 
-            chrono::NaiveDate::parse_from_str(&date_str, "%Y.%m.%d")
+            let mut text = Vec::new();
+            collect_text(node, &mut text);
+
+            date_str = String::from_utf8(text).unwrap();
         }
+
+        chrono::NaiveDate::parse_from_str(&date_str.trim(), "%m/%d/%Y")
     }
 
     fn collect_text<'a>(node: &'a AstNode<'a>, output: &mut Vec<u8>) {
@@ -88,7 +103,11 @@ fn main() -> anyhow::Result<()> {
             println!("{:#?}", root);
         }
         cli::Command::View => {
-            return Err(anyhow::Error::msg("View command not implemented"));
+            let md = today_plan.content()?;
+            let plan = plan::Plan::from_document(&md)?;
+
+            println!("Date: {}", plan.date().format(format!("%m/%d/%Y").as_str()));
+            println!("Day: {:?}", plan.day());
         }
         cli::Command::Edit => {
             today_plan.edit();
