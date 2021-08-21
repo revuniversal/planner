@@ -1,12 +1,13 @@
 mod cli;
 mod io;
+mod plan;
 
 use clap::Clap;
-use cli::Options;
 use comrak::{parse_document, Arena, ComrakOptions};
-use io::*;
 
-mod plan;
+use crate::cli::Options;
+use crate::io::*;
+use crate::plan::TaskStatus;
 
 fn main() -> anyhow::Result<()> {
     env_logger::init();
@@ -39,8 +40,21 @@ fn main() -> anyhow::Result<()> {
             let md = today_plan.content()?;
             let plan = plan::Plan::from_document(&md)?;
 
-            println!("Date: {}", plan.date().format("%m/%d/%Y"));
-            println!("Day: {:?}", plan.day());
+            println!("## {}", plan.date().format("%m/%d/%Y"));
+            println!("{}", plan.day());
+            println!("");
+
+            println!("## Tasks:");
+            for category in plan.tasks().categories() {
+                println!("- **{}**", category.name());
+                for task in category.tasks() {
+                    match task.status() {
+                        TaskStatus::Incomplete => println!("  - [ ] {}", task.description()),
+                        _ => {}
+                    }
+                }
+            }
+            println!("");
         }
         cli::Command::Edit => {
             today_plan.edit();
