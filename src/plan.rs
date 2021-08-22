@@ -165,25 +165,22 @@ fn parse_task_category<'a>(node: &'a AstNode<'a>) -> anyhow::Result<TaskCategory
             NodeValue::Paragraph => name = name + &get_node_text(node),
             NodeValue::List(_) => {
                 for node in node.children() {
-                    match &node.data.borrow().value {
-                        NodeValue::Item(_) => {
-                            let text = get_node_text(node);
-                            let status = if text.starts_with("[x]") {
-                                TaskStatus::Complete
-                            } else {
-                                TaskStatus::Incomplete
-                            };
+                    if let NodeValue::Item(_) = &node.data.borrow().value {
+                        let text = get_node_text(node);
+                        let status = if text.starts_with("[x]") {
+                            TaskStatus::Complete
+                        } else {
+                            TaskStatus::Incomplete
+                        };
 
-                            tasks.push(Task {
-                                description: text
-                                    .trim_start_matches("[ ]")
-                                    .trim_start_matches("[x]")
-                                    .trim()
-                                    .to_string(),
-                                status,
-                            });
-                        }
-                        _ => {}
+                        tasks.push(Task {
+                            description: text
+                                .trim_start_matches("[ ]")
+                                .trim_start_matches("[x]")
+                                .trim()
+                                .to_string(),
+                            status,
+                        });
                     }
                 }
             }

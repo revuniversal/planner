@@ -42,7 +42,7 @@ fn main() -> anyhow::Result<()> {
 
             println!("## {}", plan.date().format("%m/%d/%Y"));
             println!("{}", plan.day());
-            println!("");
+            println!();
 
             println!("## Tasks:");
             for category in plan.tasks().categories() {
@@ -50,11 +50,11 @@ fn main() -> anyhow::Result<()> {
                 for task in category.tasks() {
                     match task.status() {
                         TaskStatus::Incomplete => println!("  - [ ] {}", task.description()),
-                        _ => {}
+                        TaskStatus::Complete => {}
                     }
                 }
             }
-            println!("");
+            println!();
         }
         cli::Command::Edit => {
             today_plan.edit();
