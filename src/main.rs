@@ -44,17 +44,34 @@ fn main() -> anyhow::Result<()> {
             println!("{}", plan.day());
             println!();
 
-            println!("## Tasks:");
-            for category in plan.tasks().categories() {
-                println!("- **{}**", category.name());
-                for task in category.tasks() {
-                    match task.status() {
-                        TaskStatus::Incomplete => println!("  - [ ] {}", task.description()),
-                        TaskStatus::Complete => {}
+            if let Some(tasks) = plan.tasks() {
+                println!("## Tasks:");
+                for category in tasks.categories() {
+                    println!("- **{}**", category.name());
+                    for task in category.tasks() {
+                        match task.status() {
+                            TaskStatus::Incomplete => println!("  - [ ] {}", task.description()),
+                            TaskStatus::Complete => {}
+                        }
                     }
                 }
+                println!();
             }
-            println!();
+
+            if let Some(schedule) = plan.schedule() {
+                println!("## Schedule:");
+                println!("- **Planned**");
+                for event in schedule.planned() {
+                    let time = event.start().format("%H%M").to_string();
+                    println!("  - {}\t{}", time, event.description());
+                }
+                println!("- **Actual**");
+                for event in schedule.actual() {
+                    let time = event.start().format("%H%M").to_string();
+                    println!("  - {}\t{}", time, event.description());
+                }
+                println!();
+            }
         }
         cli::Command::Edit => {
             today_plan.edit();
