@@ -1,3 +1,4 @@
+use crate::plan::util::get_node_text;
 use chrono::{Datelike, NaiveDate, NaiveTime, Weekday};
 use comrak::{
     nodes::{AstNode, NodeValue},
@@ -5,9 +6,13 @@ use comrak::{
 };
 
 #[derive(Debug)]
-enum ScheduleSection {
-    Planned,
-    Actual,
+pub struct TaskList {
+    categories: Vec<TaskCategory>,
+}
+impl TaskList {
+    pub fn categories(&self) -> &Vec<TaskCategory> {
+        &self.categories
+    }
 }
 
 #[derive(Debug)]
@@ -47,6 +52,12 @@ impl TaskCategory {
 }
 
 #[derive(Debug)]
+enum ScheduleSection {
+    Planned,
+    Actual,
+}
+
+#[derive(Debug)]
 pub struct Event {
     description: String,
     start: NaiveTime,
@@ -78,16 +89,6 @@ impl Schedule {
     /// Get a reference to the actual events.
     pub fn actual(&self) -> &[Event] {
         self.actual.as_slice()
-    }
-}
-
-#[derive(Debug)]
-pub struct TaskList {
-    categories: Vec<TaskCategory>,
-}
-impl TaskList {
-    pub fn categories(&self) -> &Vec<TaskCategory> {
-        &self.categories
     }
 }
 
@@ -386,26 +387,4 @@ fn parse_task_category<'a>(node: &'a AstNode<'a>) -> anyhow::Result<TaskCategory
     Ok(TaskCategory { name, tasks })
 }
 
-fn get_node_text<'a>(node: &'a AstNode<'a>) -> String {
-    let mut text_bytes = Vec::new();
-    collect_text(node, &mut text_bytes);
-    String::from_utf8(text_bytes).unwrap().trim().to_string()
-}
-
-/// Collect the text and
-fn collect_text<'a>(node: &'a AstNode<'a>, output: &mut Vec<u8>) {
-    match node.data.borrow().value {
-        NodeValue::Text(ref literal) => output.extend_from_slice(literal),
-        NodeValue::Code(ref literal) => {
-            output.push(b'`');
-            output.extend_from_slice(literal);
-            output.push(b'`');
-        }
-        NodeValue::LineBreak | NodeValue::SoftBreak => output.push(b' '),
-        _ => {
-            for n in node.children() {
-                collect_text(n, output);
-            }
-        }
-    }
-}
+mod util;
