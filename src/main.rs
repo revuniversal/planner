@@ -7,7 +7,6 @@ use comrak::{parse_document, Arena, ComrakOptions};
 
 use crate::cli::Options;
 use crate::io::*;
-use crate::plan::TaskStatus;
 
 fn main() -> anyhow::Result<()> {
     env_logger::init();
@@ -39,39 +38,8 @@ fn main() -> anyhow::Result<()> {
         cli::Command::View => {
             let md = today_plan.content()?;
             let plan = plan::Plan::from_document(&md)?;
-
-            println!("## {}", plan.date().format("%m/%d/%Y"));
-            println!("{}", plan.day());
-            println!();
-
-            if let Some(tasks) = plan.tasks() {
-                println!("## Tasks:");
-                for category in tasks.categories() {
-                    println!("- **{}**", category.name());
-                    for task in category.tasks() {
-                        match task.status() {
-                            TaskStatus::Incomplete => println!("  - [ ] {}", task.description()),
-                            TaskStatus::Complete => {}
-                        }
-                    }
-                }
-                println!();
-            }
-
-            if let Some(schedule) = plan.schedule() {
-                println!("## Schedule:");
-                println!("- **Planned**");
-                for event in schedule.planned() {
-                    let time = event.start().format("%H%M").to_string();
-                    println!("  - {}\t{}", time, event.description());
-                }
-                println!("- **Actual**");
-                for event in schedule.actual() {
-                    let time = event.start().format("%H%M").to_string();
-                    println!("  - {}\t{}", time, event.description());
-                }
-                println!();
-            }
+            let parsed = plan.to_markdown();
+            print!("{}", parsed);
         }
         cli::Command::Edit => {
             today_plan.edit();

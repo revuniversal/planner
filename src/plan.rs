@@ -1,57 +1,16 @@
-use self::util::get_node_text;
+mod schedule;
+mod tasks;
+mod util;
+use std::fmt::Write;
+
+use crate::plan::tasks::parse_task_list;
+
+use self::{tasks::TaskList, util::get_node_text};
 use chrono::{Datelike, NaiveDate, Weekday};
-use comrak::{
-    nodes::{AstNode, NodeValue},
-    parse_document, Arena, ComrakOptions,
-};
+use comrak::{nodes::NodeValue, parse_document, Arena, ComrakOptions};
 
 use self::schedule::{parse_schedule, Schedule};
 
-#[derive(Debug)]
-pub struct TaskList {
-    categories: Vec<TaskCategory>,
-}
-impl TaskList {
-    pub fn categories(&self) -> &Vec<TaskCategory> {
-        &self.categories
-    }
-}
-
-#[derive(Debug)]
-pub enum TaskStatus {
-    Complete,
-    Incomplete,
-}
-
-#[derive(Debug)]
-pub struct Task {
-    description: String,
-    status: TaskStatus,
-}
-impl Task {
-    pub fn description(&self) -> &str {
-        &self.description
-    }
-
-    pub fn status(&self) -> &TaskStatus {
-        &self.status
-    }
-}
-
-#[derive(Debug)]
-pub struct TaskCategory {
-    name: String,
-    tasks: Vec<Task>,
-}
-impl TaskCategory {
-    pub fn name(&self) -> &str {
-        &self.name
-    }
-
-    pub fn tasks(&self) -> &Vec<Task> {
-        &self.tasks
-    }
-}
 #[derive(Debug)]
 pub struct Plan {
     date: NaiveDate,
@@ -59,6 +18,7 @@ pub struct Plan {
     schedule: Option<Schedule>,
 }
 impl Plan {
+    /// Creates a [Plan] from a markdown document.
     pub fn from_document(doc: &str) -> anyhow::Result<Self> {
         #[derive(Debug, PartialEq)]
         enum ParseState {
@@ -192,53 +152,48 @@ impl Plan {
     pub fn schedule(&self) -> &Option<Schedule> {
         &self.schedule
     }
-}
 
-mod schedule;
+    pub fn to_markdown(&self) -> String {
+        let mut md: String = String::new();
 
-fn parse_task_list<'a>(node: &'a AstNode<'a>) -> anyhow::Result<TaskList> {
-    let mut categories: Vec<TaskCategory> = Vec::new();
+        writeln!(md, "## {}", self.date().format("%m/%d/%Y")).unwrap();
+        writeln!(md, "{}", self.day()).unwrap();
+        writeln!(md).unwrap();
 
-    for child in node.children() {
-        categories.push(parse_task_category(child)?);
-    }
-
-    Ok(TaskList { categories })
-}
-
-fn parse_task_category<'a>(node: &'a AstNode<'a>) -> anyhow::Result<TaskCategory> {
-    let mut tasks: Vec<Task> = Vec::new();
-    let mut name: String = "".to_string();
-
-    for node in node.children() {
-        match &node.data.borrow().value {
-            NodeValue::Paragraph => name = name + &get_node_text(node),
-            NodeValue::List(_) => {
-                for node in node.children() {
-                    if let NodeValue::Item(_) = &node.data.borrow().value {
-                        let text = get_node_text(node);
-                        let status = if text.starts_with("[x]") {
-                            TaskStatus::Complete
-                        } else {
-                            TaskStatus::Incomplete
-                        };
-
-                        tasks.push(Task {
-                            description: text
-                                .trim_start_matches("[ ]")
-                                .trim_start_matches("[x]")
-                                .trim()
-                                .to_string(),
-                            status,
-                        });
+        if let Some(tasks) = self.tasks() {
+            writeln!(md, "## Tasks:").unwrap();
+            for category in tasks.categories() {
+                writeln!(md, "- **{}**", category.name()).unwrap();
+                for task in category.tasks() {
+                    match task.status() {
+                        self::tasks::TaskStatus::Incomplete => {
+                            writeln!(md, "  - [ ] {}", task.description()).unwrap();
+                        }
+                        self::tasks::TaskStatus::Complete => {}
                     }
                 }
             }
-            _ => {}
+            writeln!(md).unwrap();
         }
+
+        if let Some(schedule) = self.schedule() {
+            writeln!(md, "## Schedule:").unwrap();
+
+            writeln!(md, "- **Planned**").unwrap();
+            for event in schedule.planned() {
+                let time = event.start().format("%H%M").to_string();
+                writeln!(md, "  - {}\t{}", time, event.description()).unwrap();
+            }
+
+            writeln!(md, "- **Actual**").unwrap();
+            for event in schedule.actual() {
+                let time = event.start().format("%H%M").to_string();
+                writeln!(md, "  - {}\t{}", time, event.description()).unwrap();
+            }
+        }
+
+        writeln!(md).unwrap();
+
+        md
     }
-
-    Ok(TaskCategory { name, tasks })
 }
-
-mod util;
