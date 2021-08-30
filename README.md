@@ -36,15 +36,21 @@ foo@bar:~$ planner --help
 
 ## TODOs
 
+- [ ] Subcommand: `review`: Review plan
+  - [ ] Arg: `today` (default) - show what's been today
+  - [ ] Arg: `yesterday` - Show what was done yesterday
+  - [ ] Arg: `week` - Show data from the week so far (starting on Monday)
+  - [ ] Arg: `last-week` - Show data from the last completed week (starting on Monday)
+  - [ ] Arg: `month` - Show data from the month so far (starting on the 1st)
+  - [ ] Arg: `since (date|weekday)` - Show data from all plans sinnce the specified day
+        or date
+- [ ] Configuration
+  - [ ] Allow users to change editor preferences (not everybody loves vim).
 - [ ] Add unit tests for PlanDirectory, PlanFile
-- On plan creation:
-  - [x] Update day/date header to the date that matches the filename
+- [ ] Add unit tests for schedule parsing
+- [ ] Add note parsing with unit tests
+- [x] On plan copy
+  - [x] Update day/date header so it matches the filename
   - [x] Clean the TaskList section (remove completed tasks)
   - [x] Clean the Schedule section (remove the actual schedule events)
   - [x] Clean the notes section (delete the notes)
-- Subcommand: `review`: Review most recent plan
-  - [ ] Show day and date
-  - [ ] Show completed tasks
-  - [ ] Show notes
-- [ ] Configuration
-  - [ ] Allow users to change editor preferences (not everybody loves vim).
