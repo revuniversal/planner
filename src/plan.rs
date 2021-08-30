@@ -172,7 +172,7 @@ impl Plan {
         writeln!(md).unwrap();
 
         if let Some(tasks) = self.tasks() {
-            writeln!(md, "## Tasks:").unwrap();
+            writeln!(md, "## Tasks").unwrap();
             for category in tasks.categories() {
                 writeln!(md, "- **{}**", category.name()).unwrap();
                 for task in category.tasks() {
@@ -188,7 +188,7 @@ impl Plan {
         }
 
         if let Some(schedule) = self.schedule() {
-            writeln!(md, "## Schedule:").unwrap();
+            writeln!(md, "## Schedule").unwrap();
 
             writeln!(md, "- **Planned**").unwrap();
             for event in schedule.planned() {
@@ -234,11 +234,13 @@ impl Plan {
 
 #[cfg(test)]
 mod tests {
+    use crate::plan::tasks::TaskStatus;
+
     use super::*;
     use indoc::indoc;
 
     #[test]
-    fn test_minimal_to_markdown_function() {
+    fn minimal_export_md() {
         let date = NaiveDate::from_ymd(2000, 1, 1);
         let plan = Plan::new(date, None, None);
         let md = plan.to_markdown();
@@ -252,5 +254,36 @@ mod tests {
 
             "}
         );
+    }
+
+    #[test]
+    fn minimal_import_tasks() {
+        let md = indoc! {"
+            # 01/01/2000
+            Saturday
+
+            ## Tasks
+
+            - **Personal**
+              - [ ] TODO
+              - [x] Already done
+        "};
+
+        let plan = Plan::from_markdown(md).unwrap();
+        let tasks = plan.tasks.unwrap();
+
+        assert_eq!(tasks.categories().len(), 1);
+
+        let personal_tasks = tasks.categories().first().unwrap();
+        assert_eq!(personal_tasks.name(), "Personal");
+        assert_eq!(personal_tasks.tasks().len(), 2);
+
+        let todo = personal_tasks.tasks().first().unwrap();
+        assert_eq!(todo.description(), "TODO");
+        assert_eq!(todo.status(), &TaskStatus::Incomplete);
+
+        let already_done = personal_tasks.tasks().last().unwrap();
+        assert_eq!(already_done.description(), "Already done");
+        assert_eq!(already_done.status(), &TaskStatus::Complete);
     }
 }
