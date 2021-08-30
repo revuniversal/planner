@@ -18,6 +18,16 @@ pub struct Plan {
     schedule: Option<Schedule>,
 }
 impl Plan {
+    #[cfg(test)]
+    /// Initializes a new plan.
+    fn new(date: NaiveDate, tasks: Option<TaskList>, schedule: Option<Schedule>) -> Self {
+        Self {
+            date,
+            tasks,
+            schedule,
+        }
+    }
+
     /// Creates a [Plan] from a markdown document.
     pub fn from_markdown(doc: &str) -> anyhow::Result<Self> {
         #[derive(Debug, PartialEq)]
@@ -192,7 +202,7 @@ impl Plan {
                 writeln!(md, "  - {}\t{}", time, event.description()).unwrap();
             }
         }
-
+        writeln!(md, "## Notes").unwrap();
         writeln!(md).unwrap();
 
         md
@@ -219,5 +229,28 @@ impl Plan {
         }
 
         log::trace!("Plan cleaned.");
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use indoc::indoc;
+
+    #[test]
+    fn test_minimal_to_markdown_function() {
+        let date = NaiveDate::from_ymd(2000, 1, 1);
+        let plan = Plan::new(date, None, None);
+        let md = plan.to_markdown();
+        assert_eq!(
+            md,
+            indoc! {"
+                # 01/01/2000
+                Saturday
+
+                ## Notes
+
+            "}
+        );
     }
 }

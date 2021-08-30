@@ -22,3 +22,6 @@ log = "0.4.14"
 env_logger = "0.9"
 anyhow = "1.0"
 comrak = "0.10"
+
+[dev-dependencies]
+indoc = "1.0"
