@@ -1,3 +1,4 @@
+use anyhow::Result;
 use chrono::NaiveDate;
 use std::{
     fs, io,
@@ -5,41 +6,51 @@ use std::{
     process::Command,
 };
 
+use crate::plan::Plan;
+
 const LOG_EXT: &str = "plan.md";
+const EDITOR: &str = "vim.bat";
 
 #[derive(Debug)]
 pub struct PlanFile {
     path: PathBuf,
+    plan: Plan,
 }
 
 impl PlanFile {
-    fn new(path: PathBuf) -> Self {
+    fn new(path: PathBuf) -> Result<Self> {
         // TODO: validate path exists, is valid
-        PlanFile { path }
-    }
-
-    pub fn get_date(&self) -> NaiveDate {
-        // need to remove both .plan and .md, so strip the extension twice
-        let mut path = self.path.to_owned();
-        path.set_extension("");
-        path.set_extension("");
-
-        let date_str = path.file_name().and_then(|e| e.to_str()).unwrap();
-        chrono::NaiveDate::parse_from_str(date_str, "%Y.%m.%d")
-            .expect("Could not parse date from filename.")
-    }
-
-    pub fn content(&self) -> io::Result<String> {
-        fs::read_to_string(self.path.to_owned())
+        let doc = fs::read_to_string(path.to_owned())?;
+        let plan = Plan::from_markdown(&doc)?;
+        Ok(PlanFile { path, plan })
     }
 
     pub fn edit(&self) {
-        log::debug!("Opening plan file in vim: {:#?}", &self.path);
+        log::debug!("Opening plan file for editing: {:#?}", &self.path);
 
-        Command::new("vim.bat")
+        Command::new(EDITOR)
             .arg(&self.path)
             .status()
-            .expect("vim failed to start.");
+            .expect("Editor failed to start.");
+    }
+
+    /// Get a reference to the plan from the file.
+    pub fn plan(&self) -> &Plan {
+        &self.plan
+    }
+
+    pub fn create_copy(&self, path: PathBuf, date: NaiveDate) -> anyhow::Result<Self> {
+        let mut new_plan = self.plan.clone();
+        new_plan.clean();
+        new_plan.set_date(date);
+
+        let md = new_plan.to_markdown();
+        std::fs::write(path.to_owned(), md)?;
+
+        Ok(Self {
+            path,
+            plan: new_plan,
+        })
     }
 }
 
@@ -59,26 +70,32 @@ impl PlanDirectory {
         log::debug!("Creating plan file for date: {:#?}", date);
         std::fs::File::create(plan_path.to_owned())?;
 
-        Ok(PlanFile::new(plan_path))
+        PlanFile::new(plan_path)
     }
 
-    pub fn copy_plan(&self, plan_to_copy: PlanFile, date: NaiveDate) -> io::Result<PlanFile> {
+    /// Creates a clean copy of the provided plan file, and sets the date.
+    pub fn copy_plan(&self, original_plan: PlanFile, date: NaiveDate) -> anyhow::Result<PlanFile> {
         let path = self.get_plan_path(date);
 
-        log::debug!("Copying plan file: {:#?} to {:#?}", plan_to_copy, path);
-        std::fs::copy(plan_to_copy.path, path.to_owned())?;
-
-        Ok(PlanFile::new(path))
+        log::debug!(
+            "Creating a copy of plan file `{:#?}` for date `{:#?}`",
+            original_plan.path,
+            date
+        );
+        original_plan.create_copy(path, date)
     }
 
     pub fn get_plan(&self, date: NaiveDate) -> Option<PlanFile> {
         let plan_path = self.get_plan_path(date);
 
         if plan_path.exists() {
-            log::debug!("Plan file found at path: {:#?}", plan_path);
-            Some(PlanFile::new(plan_path))
+            log::trace!("Plan file found at path: {:#?}", plan_path);
+            match PlanFile::new(plan_path) {
+                Ok(file) => Some(file),
+                _ => None,
+            }
         } else {
-            log::debug!("No plan file found at path: {:#?}", plan_path);
+            log::trace!("No plan file found at path: {:#?}", plan_path);
             None
         }
     }
@@ -94,7 +111,8 @@ impl PlanDirectory {
                 paths
                     .into_iter()
                     .map(PlanFile::new)
-                    .find(|p| p.get_date() <= today)
+                    .flatten()
+                    .find(|p| p.plan().date() <= today)
             }
             _ => None,
         };

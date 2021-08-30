@@ -3,13 +3,13 @@ use comrak::nodes::{AstNode, NodeValue};
 
 use crate::plan::util::get_node_text;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum ScheduleSection {
     Planned,
     Actual,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Event {
     description: String,
     start: NaiveTime,
@@ -26,7 +26,7 @@ impl Event {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Schedule {
     planned: Vec<Event>,
     actual: Vec<Event>,
@@ -41,6 +41,11 @@ impl Schedule {
     /// Get a reference to the actual events.
     pub fn actual(&self) -> &[Event] {
         self.actual.as_slice()
+    }
+
+    /// Cleans the schedule, removing all actual events.
+    pub(super) fn clean(&mut self) {
+        self.actual.clear();
     }
 }
 

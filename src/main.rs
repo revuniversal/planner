@@ -3,7 +3,6 @@ mod io;
 mod plan;
 
 use clap::Clap;
-use comrak::{parse_document, Arena, ComrakOptions};
 
 use crate::cli::Options;
 use crate::io::*;
@@ -28,17 +27,8 @@ fn main() -> anyhow::Result<()> {
     };
 
     match options.command() {
-        cli::Command::Ast => {
-            let arena = Arena::new();
-            let md = today_plan.content()?;
-            let root = parse_document(&arena, &md, &ComrakOptions::default());
-
-            println!("{:#?}", root);
-        }
         cli::Command::View => {
-            let md = today_plan.content()?;
-            let plan = plan::Plan::from_document(&md)?;
-            let parsed = plan.to_markdown();
+            let parsed = today_plan.plan().to_markdown();
             print!("{}", parsed);
         }
         cli::Command::Edit => {

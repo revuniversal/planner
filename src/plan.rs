@@ -11,7 +11,7 @@ use comrak::{nodes::NodeValue, parse_document, Arena, ComrakOptions};
 
 use self::schedule::{parse_schedule, Schedule};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Plan {
     date: NaiveDate,
     tasks: Option<TaskList>,
@@ -19,7 +19,7 @@ pub struct Plan {
 }
 impl Plan {
     /// Creates a [Plan] from a markdown document.
-    pub fn from_document(doc: &str) -> anyhow::Result<Self> {
+    pub fn from_markdown(doc: &str) -> anyhow::Result<Self> {
         #[derive(Debug, PartialEq)]
         enum ParseState {
             Initial,
@@ -153,10 +153,11 @@ impl Plan {
         &self.schedule
     }
 
+    /// Exports a copy of the plan as markdown.
     pub fn to_markdown(&self) -> String {
         let mut md: String = String::new();
 
-        writeln!(md, "## {}", self.date().format("%m/%d/%Y")).unwrap();
+        writeln!(md, "# {}", self.date().format("%m/%d/%Y")).unwrap();
         writeln!(md, "{}", self.day()).unwrap();
         writeln!(md).unwrap();
 
@@ -195,5 +196,28 @@ impl Plan {
         writeln!(md).unwrap();
 
         md
+    }
+
+    /// Sets the plan date.
+    pub(crate) fn set_date(&mut self, date: NaiveDate) {
+        self.date = date;
+    }
+
+    /// Cleans the plan and its subsections.
+    pub fn clean(&mut self) {
+        log::trace!("Cleaning plan `{:#?}`...", self.date());
+
+        if let Some(tasks) = &mut self.tasks {
+            log::trace!("Task section exists. Cleaning...");
+            tasks.clean();
+            log::trace!("Task section cleaned.");
+        }
+        if let Some(schedule) = &mut self.schedule {
+            log::trace!("Schedule section exists. Cleaning...");
+            schedule.clean();
+            log::trace!("Schedule section cleaned.");
+        }
+
+        log::trace!("Plan cleaned.");
     }
 }

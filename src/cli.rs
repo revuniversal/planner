@@ -21,8 +21,6 @@ pub struct Options {
 pub enum Command {
     /// Edit the plan in Vim.
     Edit,
-    /// Send the plan's abstract syntax tree to STDOUT.
-    Ast,
     /// Send the plan to STDOUT.
     View,
 }
