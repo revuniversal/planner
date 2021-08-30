@@ -37,14 +37,14 @@ foo@bar:~$ planner --help
 ## TODOs
 
 - [ ] Add unit tests for PlanDirectory, PlanFile
-- [ ] On plan creation:
-  - [ ] Add or modify day/date header
-  - [ ] Add or modify TODO section
-  - [ ] Add or modify Schedule section
-  - [ ] Add or modify notes section
-- [ ] Subcommand: `review`: Review most recent plan
+- On plan creation:
+  - [x] Update day/date header to the date that matches the filename
+  - [x] Clean the TaskList section (remove completed tasks)
+  - [x] Clean the Schedule section (remove the actual schedule events)
+  - [x] Clean the notes section (delete the notes)
+- Subcommand: `review`: Review most recent plan
   - [ ] Show day and date
   - [ ] Show completed tasks
   - [ ] Show notes
 - [ ] Configuration
-  - [ ] Change editor preference (not everybody loves vim).
+  - [ ] Allow users to change editor preferences (not everybody loves vim).
