@@ -27,6 +27,7 @@ jobs:
       - name: Clippy Lint
         run: cargo clippy -- -D warnings
       - name: cargo-auto-publish
+        if: github.ref == 'refs/heads/main'
         uses: seunlanlege/cargo-auto-publish@2
         env:
           CARGO_TOKEN: ${{ secrets.CARGO_TOKEN }}

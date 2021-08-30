@@ -1,14 +1,14 @@
 mod cli;
 mod io;
+mod plan;
 
 use clap::Clap;
-use cli::Options;
+
+use crate::cli::Options;
+use crate::io::*;
 
 fn main() -> anyhow::Result<()> {
-    use io::*;
-
     env_logger::init();
-
     let options = Options::parse();
 
     let plan_dir = PlanDirectory::new(options.get_root_dir());
@@ -26,7 +26,15 @@ fn main() -> anyhow::Result<()> {
         }
     };
 
-    today_plan.edit();
+    match options.command() {
+        cli::Command::View => {
+            let parsed = today_plan.plan().to_markdown();
+            print!("{}", parsed);
+        }
+        cli::Command::Edit => {
+            today_plan.edit();
+        }
+    }
 
     Ok(())
 }
