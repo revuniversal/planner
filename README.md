@@ -45,9 +45,10 @@ foo@bar:~$ planner --help
   - [ ] Arg: `today` (default) - show what's been today
   - [ ] Arg: `yesterday` - Show what was done yesterday
   - [ ] Arg: `week` - Show data from the week so far (starting on Monday)
-  - [ ] Arg: `last-week` - Show data from the last completed week (starting on Monday)
+  - [ ] Arg: `last-week` - Show data from the previous week (starting on Monday)
   - [ ] Arg: `month` - Show data from the month so far (starting on the 1st)
-  - [ ] Arg: `since (date|weekday)` - Show data from all plans sinnce the specified day
+  - [ ] Arg: `last-month` - show data from the previous calendar month
+  - [ ] Arg: `since (date|weekday)` - Show data from all plans since the specified day
         or date
 - [x] On plan copy
   - [x] Update day/date header so it matches the filename

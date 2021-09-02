@@ -1,15 +1,16 @@
-mod schedule;
-mod tasks;
 mod util;
+
+mod sections;
+
 use std::fmt::Write;
 
-use crate::plan::tasks::parse_task_list;
-
-use self::{tasks::TaskList, util::get_node_text};
+use self::sections::tasks::TaskList;
+use self::util::get_node_text;
+use crate::plan::sections::tasks::{parse_task_list, TaskStatus};
 use chrono::{Datelike, NaiveDate, Weekday};
 use comrak::{nodes::NodeValue, parse_document, Arena, ComrakOptions};
 
-use self::schedule::{parse_schedule, Schedule};
+use self::sections::schedule::{parse_schedule, Schedule};
 
 #[derive(Debug, Clone)]
 pub struct Plan {
@@ -177,10 +178,10 @@ impl Plan {
                 writeln!(md, "- **{}**", category.name()).unwrap();
                 for task in category.tasks() {
                     match task.status() {
-                        self::tasks::TaskStatus::Incomplete => {
+                        TaskStatus::Incomplete => {
                             writeln!(md, "  - [ ] {}", task.description()).unwrap();
                         }
-                        self::tasks::TaskStatus::Complete => {}
+                        TaskStatus::Complete => {}
                     }
                 }
             }
@@ -234,7 +235,7 @@ impl Plan {
 
 #[cfg(test)]
 mod tests {
-    use crate::plan::tasks::TaskStatus;
+    use crate::plan::sections::tasks::TaskStatus;
 
     use super::*;
     use indoc::indoc;

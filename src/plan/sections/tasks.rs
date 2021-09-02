@@ -1,6 +1,6 @@
 use comrak::nodes::{AstNode, NodeValue};
 
-use super::util::get_node_text;
+use crate::plan::util::get_node_text;
 
 #[derive(Debug, Clone)]
 pub struct TaskList {
