@@ -44,7 +44,7 @@ impl Schedule {
     }
 
     /// Cleans the schedule, removing all actual events.
-    pub(super) fn clean(&mut self) {
+    pub fn clean(&mut self) {
         self.actual.clear();
     }
 }
